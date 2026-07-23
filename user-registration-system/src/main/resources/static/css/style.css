@@ -1,0 +1,61 @@
+body {
+
+    background:#f5f7fb;
+
+}
+
+
+.sidebar {
+
+    width:240px;
+    height:100vh;
+    background:#212529;
+    position:fixed;
+    left:0;
+    top:0;
+    padding-top:80px;
+
+}
+
+
+.sidebar a {
+
+    display:block;
+    color:white;
+    padding:15px 25px;
+    text-decoration:none;
+
+}
+
+
+.sidebar a:hover {
+
+    background:#0d6efd;
+
+}
+
+
+.content {
+
+    margin-left:240px;
+    padding:30px;
+
+}
+
+
+.card {
+
+    border:none;
+    border-radius:15px;
+
+}
+
+
+.footer {
+
+    margin-left:240px;
+    background:#fff;
+    padding:15px;
+    text-align:center;
+
+}
