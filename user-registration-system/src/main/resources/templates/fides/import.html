@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Import Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+<div class="content">
+    <h2>Import FIDES Excel</h2>
+    <p class="text-muted">
+        Upload the <strong>FIDES ID Management</strong> workbook (.xlsx).
+        The importer reads the <strong>User ID</strong> sheet and saves FI + credentials into the database.
+    </p>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card shadow p-4" style="max-width:560px;">
+        <form method="post" th:action="@{/fides/import}" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label" for="file">Excel file (.xlsx)</label>
+                <input class="form-control" type="file" id="file" name="file"
+                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                       required>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="replaceAll" value="true" id="replaceAll">
+                <label class="form-check-label" for="replaceAll">
+                    Replace all banks (clear DB first) — use for full 59-bank reload
+                </label>
+            </div>
+            <button class="btn btn-primary" type="submit">Import</button>
+            <a class="btn btn-link" th:href="@{/fides/institutions}">View institutions</a>
+        </form>
+        <hr>
+        <form method="post" th:action="@{/fides/import/reload-bundled}"
+              onsubmit="return confirm('Reload all 59 banks from data/FIDES_ID_Management.xlsx?');">
+            <p class="small text-muted mb-2">Or reload the Excel file already copied into the project <code>data/</code> folder.</p>
+            <button class="btn btn-outline-danger btn-sm" type="submit">Reload bundled Excel (59 banks)</button>
+        </form>
+    </div>
+
+    <div class="mt-4 small text-muted">
+        <p class="mb-1">Expected columns on User ID sheet:</p>
+        <ul>
+            <li>A–D: Sr, FI Code, Bank Name, Short Title</li>
+            <li>E–H: VPN (User ID, Password, PSK, Update Date)</li>
+            <li>I–K PSS2 · L–N Inter-Bank · O–Q Mobile Wallet · R–T Fraud · U–W MIB</li>
+        </ul>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

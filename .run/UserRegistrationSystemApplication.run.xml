@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="UserRegistrationSystemApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="ACTIVE_PROFILES" />
+    <module name="user-registration-system" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.minnminn.user_registration_system.UserRegistrationSystemApplication" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/user-registration-system" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
