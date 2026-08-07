@@ -20,28 +20,48 @@
         </div>
     </div>
 
-    <div class="card shadow p-4 notice-card" th:object="${notice}">
-        <h4 class="text-center mb-3">CBM-FIDE VPN ID &amp; Login User ID Notice</h4>
-        <div class="text-end text-muted mb-3" th:text="*{noticeDate}"></div>
+    <div class="card shadow p-4 notice-card">
+        <div class="bg-dark text-white text-center fw-bold py-2 mb-3">CBM-FIDE VPN ID &amp; Login User ID Notice</div>
+        <div class="text-end text-muted mb-3" th:text="${#temporals.format(notice.noticeDate, 'dd/MM/yyyy')}"></div>
 
-        <p><strong>BIC Code:</strong> <span class="field-highlight px-2" th:text="*{financialInstitution.fiCode}"></span></p>
-        <p><strong>FI Name:</strong> <span th:text="*{financialInstitution.bankName}"></span></p>
+        <p><strong>BIC Code:</strong> <span class="field-highlight px-2" th:text="${notice.financialInstitution.fiCode}"></span></p>
+        <p><strong>FI Name:</strong> <span th:text="${notice.financialInstitution.bankName}"></span></p>
 
         <hr>
-        <p><strong>VPN:</strong> <span class="field-highlight px-2" th:text="*{vpnStatus}"></span></p>
+        <p><strong>VPN:</strong> <span class="field-highlight px-2" th:text="${notice.vpnStatus}"></span></p>
         <table class="table table-bordered">
-            <tr><th style="width:30%">ID</th><td th:text="*{vpnUserId}"></td></tr>
-            <tr><th>Password</th><td><code th:text="*{vpnPassword}"></code></td></tr>
-            <tr><th>Pre-Shared Key</th><td><code th:text="*{vpnPsk}"></code></td></tr>
+            <tr>
+                <th style="width:30%">ID</th>
+                <td th:text="${notice.vpnStatus == 'No Change' or notice.vpnStatus == 'Pre-Shared Key Change' ? 'N/A' : notice.vpnUserId}"></td>
+            </tr>
+            <tr>
+                <th>Password</th>
+                <td><code th:text="${notice.vpnStatus == 'No Change' or notice.vpnStatus == 'Pre-Shared Key Change' ? 'N/A' : notice.vpnPassword}"></code></td>
+            </tr>
+            <tr>
+                <th>Pre-Shared Key</th>
+                <td><code th:text="${notice.vpnStatus == 'No Change' ? 'N/A' : notice.vpnPsk}"></code></td>
+            </tr>
         </table>
 
         <hr>
-        <p><strong>FIDES Login:</strong> <span class="field-highlight px-2" th:text="*{fidesLoginStatus}"></span></p>
+        <p><strong>FIDES Login:</strong> <span class="field-highlight px-2" th:text="${notice.fidesLoginStatus}"></span></p>
         <table class="table table-bordered">
-            <tr><th style="width:30%">User Category</th><td class="field-highlight" th:text="*{userCategory}"></td></tr>
-            <tr><th>Login ID</th><td th:text="*{loginUserId}"></td></tr>
-            <tr><th>Password</th><td><code th:text="*{loginPassword}"></code></td></tr>
+            <tr><th style="width:30%">User Category</th><td class="field-highlight" th:text="${notice.userCategory}"></td></tr>
+            <tr>
+                <th>Login ID</th>
+                <td th:text="${notice.fidesLoginStatus == 'No Change' ? 'N/A' : notice.loginUserId}"></td>
+            </tr>
+            <tr>
+                <th>Password</th>
+                <td><code th:text="${notice.fidesLoginStatus == 'No Change' ? 'N/A' : notice.loginPassword}"></code></td>
+            </tr>
         </table>
+
+        <div class="password-ref small text-muted mt-3">
+            <strong>Password Reference:</strong>
+            <div>ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz123456789!@#$%^&amp;*()-+[]_</div>
+        </div>
     </div>
 </div>
 

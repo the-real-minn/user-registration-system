@@ -7,6 +7,7 @@ import com.minnminn.user_registration_system.repository.CredentialRepository;
 import com.minnminn.user_registration_system.repository.FinancialInstitutionRepository;
 import com.minnminn.user_registration_system.repository.ResultNoticeRepository;
 import com.minnminn.user_registration_system.repository.SystemTypeRepository;
+import com.minnminn.user_registration_system.util.NoticeDisplayRules;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -203,7 +204,20 @@ public class ResultNoticeService {
             form.setVpnPsk(passwordGeneratorService.generatePsk());
         }
 
-        if (!"No Change".equalsIgnoreCase(form.getVpnStatus())) {
+        String vpnStatus = form.getVpnStatus();
+        if (NoticeDisplayRules.isVpnNoChange(vpnStatus)) {
+            form.setVpnUserId(NoticeDisplayRules.NA);
+            form.setVpnPassword(NoticeDisplayRules.NA);
+            form.setVpnPsk(NoticeDisplayRules.NA);
+        } else if (NoticeDisplayRules.isVpnPskChange(vpnStatus)) {
+            // Only PSK changes in live credentials; ID/Password show N/A on notice
+            vpn.setPreSharedKey(form.getVpnPsk());
+            vpn.setUpdateDate(LocalDate.now());
+            credentialRepository.save(vpn);
+            form.setVpnUserId(NoticeDisplayRules.NA);
+            form.setVpnPassword(NoticeDisplayRules.NA);
+        } else {
+            // Updated
             vpn.setUserId(form.getVpnUserId());
             vpn.setPassword(form.getVpnPassword());
             vpn.setPreSharedKey(form.getVpnPsk());
@@ -226,12 +240,18 @@ public class ResultNoticeService {
                 form.setLoginPassword(passwordGeneratorService.generateUserPassword());
             }
 
-            if (!"No Change".equalsIgnoreCase(form.getFidesLoginStatus())) {
+            if (NoticeDisplayRules.isFidesNoChange(form.getFidesLoginStatus())) {
+                form.setLoginUserId(NoticeDisplayRules.NA);
+                form.setLoginPassword(NoticeDisplayRules.NA);
+            } else {
                 login.setUserId(form.getLoginUserId());
                 login.setPassword(form.getLoginPassword());
                 login.setUpdateDate(LocalDate.now());
                 credentialRepository.save(login);
             }
+        } else if (NoticeDisplayRules.isFidesNoChange(form.getFidesLoginStatus())) {
+            form.setLoginUserId(NoticeDisplayRules.NA);
+            form.setLoginPassword(NoticeDisplayRules.NA);
         }
 
         ResultNotice notice = toNoticeEntity(fi, form, false);

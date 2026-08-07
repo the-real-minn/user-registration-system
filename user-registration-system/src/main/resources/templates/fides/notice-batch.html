@@ -11,53 +11,41 @@
 
 <div class="content">
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h2 class="mb-0">Generated reports (<span th:text="${#lists.size(notices)}">0</span>)</h2>
-        <div class="d-flex gap-2">
+        <h2 class="mb-0">PDF preview (<span th:text="${#lists.size(notices)}">0</span> bank(s))</h2>
+        <div class="d-flex gap-2 flex-wrap">
             <a class="btn btn-outline-secondary" th:href="@{/fides/notices/new}">New batch</a>
-            <a class="btn btn-primary" th:href="@{/fides/notices/batch/print}" target="_blank">Print all</a>
+            <form method="post" th:action="@{/fides/notices/batch/export-pdf}" class="d-inline">
+                <button class="btn btn-primary" type="submit">
+                    Download ZIP (1 PDF per BIC)
+                </button>
+            </form>
         </div>
     </div>
 
-    <div class="notice-report mb-4" th:each="notice : ${notices}" th:object="${notice}">
-        <div class="card shadow p-4 notice-card">
-            <div class="notice-title-bar text-center mb-2">
-                CBM-FIDE VPN ID &amp; Login User ID Notice
+    <p class="text-muted">
+        Preview each bank PDF below. Click <strong>Download ZIP</strong> to get one zip file.
+        Inside the zip: <code>CBMYMMMY.pdf</code>, <code>MYEBMMMY.pdf</code>, … (one PDF per BIC).
+    </p>
+
+    <div class="notice-report mb-4" th:each="notice : ${notices}">
+        <div class="card shadow p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div>
+                    <span class="field-highlight px-2 fw-semibold" th:text="${notice.financialInstitution.fiCode}">BIC</span>
+                    <span class="ms-2" th:text="${notice.financialInstitution.bankName}">Bank</span>
+                </div>
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{/fides/notices/{id}/pdf(id=${notice.id})}"
+                   target="_blank">
+                    Open PDF
+                </a>
             </div>
-            <div class="text-end text-muted mb-3" th:text="*{noticeDate}"></div>
-
-            <p><strong>BIC Code:</strong>
-                <span class="field-highlight px-2" th:text="*{financialInstitution.fiCode}"></span></p>
-            <p><strong>FI Name:</strong>
-                <span th:text="*{financialInstitution.bankName}"></span></p>
-
-            <hr>
-            <p><strong>VPN:</strong>
-                <span class="field-highlight px-2" th:text="*{vpnStatus}"></span></p>
-            <table class="table table-bordered">
-                <tr><th style="width:35%">ID</th><td th:text="*{vpnUserId}"></td></tr>
-                <tr><th>Password</th><td><code th:text="*{vpnPassword}"></code></td></tr>
-                <tr><th>Pre-Shared Key</th><td><code th:text="*{vpnPsk}"></code></td></tr>
-            </table>
-
-            <hr>
-            <p><strong>FIDES Login:</strong>
-                <span class="field-highlight px-2" th:text="*{fidesLoginStatus}"></span></p>
-            <table class="table table-bordered">
-                <tr>
-                    <th style="width:35%">User Category</th>
-                    <td class="field-highlight" th:text="*{userCategory}"></td>
-                </tr>
-                <tr><th>Login ID</th><td th:text="*{loginUserId}"></td></tr>
-                <tr><th>Password</th><td><code th:text="*{loginPassword}"></code></td></tr>
-            </table>
-
-            <div class="password-ref small text-muted mt-2">
-                <strong>Password Reference:</strong>
-                ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
-                !@#$%^&amp;*()-_+[]{}|
-            </div>
+            <iframe class="pdf-preview"
+                    th:src="@{/fides/notices/{id}/pdf(id=${notice.id})}"
+                    title="PDF preview"></iframe>
         </div>
     </div>
 </div>

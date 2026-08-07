@@ -35,4 +35,5 @@ build/
 ### Local FIDES Excel (contains credentials) ###
 data/*.xlsx
 *.db
+reports/
 

@@ -47,6 +47,18 @@ Or Maven: `spring-boot:run`
 
 Then open http://localhost:8080
 
+## Executable JAR (java -jar)
+
+```bash
+cd user-registration-system
+./mvnw -DskipTests clean package
+java -jar target/user-registration-system-0.0.1-SNAPSHOT.jar
+```
+
+Run from the module folder so `user_registration_system.db` and `data/` are found.
+
+See `docs/OPERATION_GUIDE.md` for full steps.
+
 ## If Lombok still red
 
 Install plugin: **Settings → Plugins → Lombok** → Enable → Restart IDE.

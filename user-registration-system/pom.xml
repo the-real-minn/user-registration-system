@@ -11,8 +11,9 @@
 	<groupId>com.minnminn</groupId>
 	<artifactId>user-registration-system</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<packaging>jar</packaging>
+	<name>user-registration-system</name>
+	<description>FIDES ID Management — Spring Boot executable JAR</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -74,6 +75,12 @@
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.4.1</version>
 		</dependency>
+		<!-- One Result Notice PDF per BIC -->
+		<dependency>
+			<groupId>com.github.librepdf</groupId>
+			<artifactId>openpdf</artifactId>
+			<version>1.3.39</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
@@ -102,6 +109,9 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<!-- Fat JAR with embedded Tomcat; run: java -jar target/*.jar -->
+					<mainClass>com.minnminn.user_registration_system.UserRegistrationSystemApplication</mainClass>
+					<excludeDevtools>true</excludeDevtools>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

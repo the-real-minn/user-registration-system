@@ -5,8 +5,12 @@ import com.minnminn.user_registration_system.dto.ResultNoticeForm;
 import com.minnminn.user_registration_system.entity.*;
 import com.minnminn.user_registration_system.service.ExcelImportService;
 import com.minnminn.user_registration_system.service.FinancialInstitutionService;
+import com.minnminn.user_registration_system.service.ResultNoticePdfService;
 import com.minnminn.user_registration_system.service.ResultNoticeService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,14 +27,17 @@ public class FidesController {
     private final FinancialInstitutionService fiService;
     private final ExcelImportService excelImportService;
     private final ResultNoticeService noticeService;
+    private final ResultNoticePdfService pdfService;
 
     public FidesController(
             FinancialInstitutionService fiService,
             ExcelImportService excelImportService,
-            ResultNoticeService noticeService) {
+            ResultNoticeService noticeService,
+            ResultNoticePdfService pdfService) {
         this.fiService = fiService;
         this.excelImportService = excelImportService;
         this.noticeService = noticeService;
+        this.pdfService = pdfService;
     }
 
     // ---- Institutions ----
@@ -321,6 +328,45 @@ public class FidesController {
         }
         model.addAttribute("notices", noticeService.findByIds(ids));
         return "fides/notice-batch";
+    }
+
+    /** Browser PDF preview for one notice (one BIC). */
+    @GetMapping("/notices/{id}/pdf")
+    public ResponseEntity<byte[]> previewPdf(@PathVariable Long id, HttpSession session) {
+        if (!isLoggedIn(session)) {
+            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, "/login").build();
+        }
+        ResultNotice notice = noticeService.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Notice not found"));
+        byte[] pdf = pdfService.buildPdfBytes(notice);
+        String bic = notice.getFinancialInstitution().getFiCode();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + bic + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    /**
+     * Download ZIP: one PDF file per BIC Code inside the zip.
+     */
+    @PostMapping("/notices/batch/export-pdf")
+    public ResponseEntity<?> exportPdfZip(HttpSession session) {
+        if (!isLoggedIn(session)) {
+            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, "/login").build();
+        }
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) session.getAttribute("batchNoticeIds");
+        if (ids == null || ids.isEmpty()) {
+            return ResponseEntity.status(302).header(HttpHeaders.LOCATION, "/fides/notices/new").build();
+        }
+        List<ResultNotice> notices = noticeService.findByIds(ids);
+        ResultNoticePdfService.PdfExportResult result = pdfService.buildZip(notices);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + result.zipFileName() + "\"")
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .contentLength(result.zipBytes().length)
+                .body(result.zipBytes());
     }
 
     @GetMapping("/notices/batch/print")

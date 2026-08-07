@@ -4,46 +4,88 @@
     <title>Print Notice</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { padding: 32px; font-family: "Segoe UI", Arial, sans-serif; }
-        .field-highlight { background: #fff3b0; padding: 2px 8px; }
-        h2 { text-align: center; margin-bottom: 24px; }
-        table { width: 100%; margin-bottom: 16px; }
-        th { width: 35%; background: #f8f9fa; }
+        body { padding: 32px; font-family: Arial, Helvetica, sans-serif; color: #111; }
+        .notice-page { max-width: 720px; margin: 0 auto; }
+        .title-bar {
+            background: #000; color: #fff; text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 40px; padding: 0 12px; font-weight: 700; margin-bottom: 12px;
+        }
+        .info-row { display: flex; align-items: baseline; margin: 0 0 6px; }
+        .info-label { width: 110px; flex-shrink: 0; font-weight: 700; }
+        .bank-info { margin-bottom: 8px; }
+        hr.sep { border: 0; border-top: 1px solid #000; margin: 12px 0 16px; }
+        table { width: 100%; border-collapse: collapse; margin: 6px 0 16px; }
+        th, td { border: 1px solid #000; padding: 8px 10px; }
+        th { width: 35%; background: #e6e6e6; text-align: left; font-weight: 700; }
+        .ref { font-size: 12px; font-weight: 700; margin-top: 18px; word-break: break-all; }
         @media print {
             .no-print { display: none !important; }
+            body { padding: 0; }
         }
     </style>
 </head>
-<body th:object="${notice}">
+<body>
 <div class="no-print mb-3">
     <button class="btn btn-primary" onclick="window.print()">Print</button>
     <a class="btn btn-link" th:href="@{/fides/notices/{id}(id=${notice.id})}">Back</a>
 </div>
 
-<h2>CBM-FIDE VPN ID &amp; Login User ID Notice</h2>
-<div class="text-end mb-3" th:text="*{noticeDate}"></div>
+<div class="notice-page">
+    <div class="title-bar">CBM-FIDE VPN ID &amp; Login User ID Notice</div>
+    <div class="text-end mb-3" th:text="${#temporals.format(notice.noticeDate, 'dd/MM/yyyy')}"></div>
 
-<p><strong>BIC Code:</strong> <span class="field-highlight" th:text="*{financialInstitution.fiCode}"></span></p>
-<p><strong>FI Name:</strong> <span th:text="*{financialInstitution.bankName}"></span></p>
+    <div class="bank-info">
+        <div class="info-row">
+            <span class="info-label">BIC Code:</span>
+            <span th:text="${notice.financialInstitution.fiCode}"></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">FI Name:</span>
+            <span th:text="${notice.financialInstitution.bankName}"></span>
+        </div>
+    </div>
+    <hr class="sep">
 
-<p><strong>VPN:</strong> <span class="field-highlight" th:text="*{vpnStatus}"></span></p>
-<table class="table table-bordered">
-    <tr><th>ID</th><td th:text="*{vpnUserId}"></td></tr>
-    <tr><th>Password</th><td th:text="*{vpnPassword}"></td></tr>
-    <tr><th>Pre-Shared Key</th><td th:text="*{vpnPsk}"></td></tr>
-</table>
+    <div class="info-row">
+        <span class="info-label">VPN:</span>
+        <span th:text="${notice.vpnStatus}"></span>
+    </div>
+    <table>
+        <tr>
+            <th>ID</th>
+            <td th:text="${notice.vpnStatus == 'No Change' or notice.vpnStatus == 'Pre-Shared Key Change' ? 'N/A' : notice.vpnUserId}"></td>
+        </tr>
+        <tr>
+            <th>Password</th>
+            <td th:text="${notice.vpnStatus == 'No Change' or notice.vpnStatus == 'Pre-Shared Key Change' ? 'N/A' : notice.vpnPassword}"></td>
+        </tr>
+        <tr>
+            <th>Pre-Shared Key</th>
+            <td th:text="${notice.vpnStatus == 'No Change' ? 'N/A' : notice.vpnPsk}"></td>
+        </tr>
+    </table>
 
-<p><strong>FIDES Login:</strong> <span class="field-highlight" th:text="*{fidesLoginStatus}"></span></p>
-<table class="table table-bordered">
-    <tr><th>User Category</th><td class="field-highlight" th:text="*{userCategory}"></td></tr>
-    <tr><th>Login ID</th><td th:text="*{loginUserId}"></td></tr>
-    <tr><th>Password</th><td th:text="*{loginPassword}"></td></tr>
-</table>
+    <div class="info-row">
+        <span class="info-label">FIDES Login:</span>
+        <span th:text="${notice.fidesLoginStatus}"></span>
+    </div>
+    <table>
+        <tr><th>User Category</th><td th:text="${notice.userCategory}"></td></tr>
+        <tr>
+            <th>Login ID</th>
+            <td th:text="${notice.fidesLoginStatus == 'No Change' ? 'N/A' : notice.loginUserId}"></td>
+        </tr>
+        <tr>
+            <th>Password</th>
+            <td th:text="${notice.fidesLoginStatus == 'No Change' ? 'N/A' : notice.loginPassword}"></td>
+        </tr>
+    </table>
 
-<div class="mt-4 small">
-    <strong>Password Reference:</strong><br>
-    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789<br>
-    !@#$%^&amp;*()-_+[]{}|
+    <div class="ref">
+        Password Reference:<br>
+        ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz123456789!@#$%^&amp;*()-+[]_
+    </div>
 </div>
 </body>
 </html>

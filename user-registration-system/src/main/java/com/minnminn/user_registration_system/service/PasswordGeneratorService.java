@@ -5,17 +5,20 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 
 /**
- * Password generator matching Excel Password Reference character sets.
+ * Password generator matching Excel Password Reference character set.
  */
 @Service
 public class PasswordGeneratorService {
 
-    public static final String ALPHANUMERIC =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    /** Exact Excel Password Reference string. */
+    public static final String PASSWORD_REFERENCE =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz123456789!@#$%^&*()-+[]_";
 
-    public static final String SPECIAL = "!@#$%^&*()-_+[]{}|";
-
-    public static final String FULL_SET = ALPHANUMERIC + SPECIAL;
+    public static final String UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    public static final String LOWER = "abcdefghijkmnpqrstuvwxyz";
+    public static final String DIGITS = "123456789";
+    public static final String SPECIAL = "!@#$%^&*()-+[]_";
+    public static final String FULL_SET = UPPER + LOWER + DIGITS + SPECIAL;
 
     private final SecureRandom random = new SecureRandom();
 
@@ -24,10 +27,9 @@ public class PasswordGeneratorService {
             throw new IllegalArgumentException("Password length must be at least 4");
         }
         StringBuilder sb = new StringBuilder(length);
-        // Ensure at least one from each set
-        sb.append(ALPHANUMERIC.charAt(random.nextInt(26))); // upper
-        sb.append(ALPHANUMERIC.charAt(26 + random.nextInt(26))); // lower
-        sb.append(ALPHANUMERIC.charAt(52 + random.nextInt(10))); // digit
+        sb.append(UPPER.charAt(random.nextInt(UPPER.length())));
+        sb.append(LOWER.charAt(random.nextInt(LOWER.length())));
+        sb.append(DIGITS.charAt(random.nextInt(DIGITS.length())));
         sb.append(SPECIAL.charAt(random.nextInt(SPECIAL.length())));
         for (int i = 4; i < length; i++) {
             sb.append(FULL_SET.charAt(random.nextInt(FULL_SET.length())));
