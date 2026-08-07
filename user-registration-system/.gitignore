@@ -32,8 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 
-### Local FIDES Excel (contains credentials) ###
+### Local FIDES data ###
+# Keep Excel out of Git (large + credentials).
 data/*.xlsx
+# Ignore random DB copies, but track the main app database for team share.
 *.db
+!user_registration_system.db
 reports/
 

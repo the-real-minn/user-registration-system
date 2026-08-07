@@ -33,11 +33,14 @@ user-registration-system/
   Stop FIDES.bat           ← Windows stop
   mvnw / mvnw.cmd
   pom.xml
-  user_registration_system.db
+  user_registration_system.db   ← SQLite data source (tracked in Git)
   data/FIDES_ID_Management.xlsx
   target/user-registration-system-0.0.1-SNAPSHOT.jar
 ```
 
+After `git clone` / `git pull`, run from this module folder so the app finds `user_registration_system.db`.
+
+**Security:** this DB has live VPN/FIDES credentials. Keep the GitHub repository **private**.
 ## Start (development)
 
 **Mac**
