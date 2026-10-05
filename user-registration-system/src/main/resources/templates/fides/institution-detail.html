@@ -30,13 +30,14 @@
 
     <h5 class="mt-4">Credentials</h5>
     <div class="table-responsive card shadow p-3">
-        <table class="table table-bordered align-middle mb-0">
+        <table class="table table-bordered align-middle mb-0 institution-detail-table">
             <thead>
             <tr>
                 <th>System</th>
                 <th>User ID</th>
                 <th>Password</th>
                 <th>PSK</th>
+                <th>Notes / Chat</th>
                 <th>Update Date</th>
                 <th>Actions</th>
             </tr>
@@ -47,6 +48,12 @@
                 <td th:text="${c.userId}">id</td>
                 <td><code th:text="${c.password}">pwd</code></td>
                 <td><code th:text="${c.preSharedKey}">psk</code></td>
+                <td>
+                    <div th:if="${c.notes}" class="text-wrap" style="max-width: 250px;">
+                        <small th:text="${c.notes}"></small>
+                    </div>
+                    <span class="text-muted" th:unless="${c.notes}">—</span>
+                </td>
                 <td th:text="${c.updateDate}">date</td>
                 <td class="text-nowrap">
                     <a class="btn btn-sm btn-outline-secondary"
@@ -56,12 +63,6 @@
                         <input type="hidden" name="institutionId" th:value="${institution.id}">
                         <input type="hidden" name="type" value="password">
                         <button class="btn btn-sm btn-outline-primary" type="submit">Password</button>
-                    </form>
-                    <form class="d-inline" method="post"
-                          th:action="@{/fides/credentials/{id}/generate(id=${c.id})}">
-                        <input type="hidden" name="institutionId" th:value="${institution.id}">
-                        <input type="hidden" name="type" value="userId">
-                        <button class="btn btn-sm btn-outline-dark" type="submit">User ID</button>
                     </form>
                     <form class="d-inline" method="post"
                           th:if="${c.systemType.code.name() == 'VPN'}"

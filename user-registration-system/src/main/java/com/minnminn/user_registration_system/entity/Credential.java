@@ -40,4 +40,7 @@ public class Credential {
 
     @Column(name = "update_date")
     private LocalDate updateDate;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 }

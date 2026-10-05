@@ -12,4 +12,6 @@ public interface SystemTypeRepository extends JpaRepository<SystemType, Long> {
     Optional<SystemType> findByCode(SystemTypeCode code);
 
     List<SystemType> findAllByOrderBySortOrderAsc();
+
+    List<SystemType> findByActiveTrueOrderBySortOrderAsc();
 }

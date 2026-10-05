@@ -25,4 +25,7 @@ public class SystemType {
 
     @Column(name = "sort_order")
     private Integer sortOrder;
+
+    @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
+    private boolean active = true;
 }

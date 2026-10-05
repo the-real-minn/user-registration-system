@@ -1,5 +1,6 @@
 package com.minnminn.user_registration_system.service;
 
+import com.minnminn.user_registration_system.dto.CredentialLine;
 import com.minnminn.user_registration_system.entity.Credential;
 import com.minnminn.user_registration_system.entity.FinancialInstitution;
 import com.minnminn.user_registration_system.entity.RowHighlight;
@@ -13,8 +14,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class FinancialInstitutionService {
@@ -86,6 +93,10 @@ public class FinancialInstitutionService {
         return systemTypeRepository.findAllByOrderBySortOrderAsc();
     }
 
+    public List<SystemType> findActiveSystemTypes() {
+        return systemTypeRepository.findByActiveTrueOrderBySortOrderAsc();
+    }
+
     public Optional<SystemType> findSystemTypeByCode(SystemTypeCode code) {
         return systemTypeRepository.findByCode(code);
     }
@@ -106,6 +117,7 @@ public class FinancialInstitutionService {
             String userId,
             String password,
             String preSharedKey,
+            String notes,
             LocalDate updateDate) {
 
         FinancialInstitution fi = idOrThrow(fiId);
@@ -124,6 +136,7 @@ public class FinancialInstitutionService {
         } else {
             credential.setPreSharedKey(null);
         }
+        credential.setNotes(blankToNull(notes));
         credential.setUpdateDate(updateDate != null ? updateDate : LocalDate.now());
         return credentialRepository.save(credential);
     }
@@ -135,12 +148,8 @@ public class FinancialInstitutionService {
 
         switch (type) {
             case "psk" -> credential.setPreSharedKey(passwordGeneratorService.generatePsk());
-            case "userId" -> {
-                String suffix = credential.getSystemType().getIdSuffix();
-                credential.setUserId(passwordGeneratorService.generateUserId(
-                        credential.getFinancialInstitution().getFiCode(), suffix));
-            }
-            default -> credential.setPassword(passwordGeneratorService.generateUserPassword());
+            case "password" -> credential.setPassword(passwordGeneratorService.generateUserPassword());
+            default -> throw new IllegalArgumentException("Unsupported generate type: " + type);
         }
         credential.setUpdateDate(LocalDate.now());
         return credentialRepository.save(credential);
@@ -148,6 +157,14 @@ public class FinancialInstitutionService {
 
     @Transactional
     public FinancialInstitution createWithEmptyCredentials(FinancialInstitution fi) {
+        return createWithCredentials(fi, null);
+    }
+
+    /**
+     * Create FI and save credentials only for selected system types.
+     */
+    @Transactional
+    public FinancialInstitution createWithCredentials(FinancialInstitution fi, List<Long> selectedSystemTypeIds, List<CredentialLine> lines) {
         if (fiRepository.findByFiCode(fi.getFiCode()).isPresent()) {
             throw new IllegalArgumentException("FI Code already exists: " + fi.getFiCode());
         }
@@ -155,14 +172,170 @@ public class FinancialInstitutionService {
             fi.setSortOrder((int) fiRepository.count() + 1);
         }
         FinancialInstitution saved = save(fi);
-        for (SystemType type : findAllSystemTypes()) {
-            Credential c = new Credential();
-            c.setFinancialInstitution(saved);
-            c.setSystemType(type);
-            c.setUserId(passwordGeneratorService.generateUserId(saved.getFiCode(), type.getIdSuffix()));
-            credentialRepository.save(c);
+        if (selectedSystemTypeIds != null && !selectedSystemTypeIds.isEmpty()) {
+            for (Long systemTypeId : selectedSystemTypeIds) {
+                SystemType systemType = systemTypeRepository.findById(systemTypeId)
+                        .orElseThrow(() -> new IllegalArgumentException("System type not found: " + systemTypeId));
+                Credential c = new Credential();
+                c.setFinancialInstitution(saved);
+                c.setSystemType(systemType);
+                credentialRepository.save(c);
+            }
+        }
+        if (lines != null && !lines.isEmpty()) {
+            applyCredentialLines(saved, lines);
         }
         return saved;
+    }
+
+    /**
+     * Update FI fields and system credentials from create/edit form.
+     */
+    @Transactional
+    public FinancialInstitution updateWithCredentials(Long id, FinancialInstitution form, List<Long> selectedSystemTypeIds, List<CredentialLine> lines) {
+        FinancialInstitution fi = idOrThrow(id);
+        fi.setFiCode(form.getFiCode());
+        fi.setBankName(form.getBankName());
+        fi.setShortTitle(form.getShortTitle());
+        fi.setSortOrder(form.getSortOrder());
+        fi.setRowHighlight(form.getRowHighlight());
+        FinancialInstitution saved = save(fi);
+
+        // Add credentials for newly selected system types
+        if (selectedSystemTypeIds != null && !selectedSystemTypeIds.isEmpty()) {
+            for (Long systemTypeId : selectedSystemTypeIds) {
+                SystemType systemType = systemTypeRepository.findById(systemTypeId)
+                        .orElseThrow(() -> new IllegalArgumentException("System type not found: " + systemTypeId));
+                if (credentialRepository.findByFinancialInstitutionAndSystemType(saved, systemType).isEmpty()) {
+                    Credential c = new Credential();
+                    c.setFinancialInstitution(saved);
+                    c.setSystemType(systemType);
+                    credentialRepository.save(c);
+                }
+            }
+        }
+
+        if (lines != null) {
+            applyCredentialLines(saved, lines);
+        }
+        return saved;
+    }
+
+    /**
+     * Empty lines for create form (active systems only).
+     */
+    public List<CredentialLine> blankCredentialLines() {
+        List<CredentialLine> lines = new ArrayList<>();
+        for (SystemType type : findActiveSystemTypes()) {
+            lines.add(toLine(type, null));
+        }
+        return lines;
+    }
+
+    /**
+     * Filled lines for edit form (active systems only).
+     */
+    public List<CredentialLine> credentialLinesForInstitution(Long fiId) {
+        Map<Long, Credential> byType = findCredentials(fiId).stream()
+                .collect(Collectors.toMap(c -> c.getSystemType().getId(), Function.identity(), (a, b) -> a));
+
+        List<CredentialLine> lines = new ArrayList<>();
+        for (SystemType type : findActiveSystemTypes()) {
+            lines.add(toLine(type, byType.get(type.getId())));
+        }
+        return lines;
+    }
+
+    /**
+     * Get all system types with selection status for checkboxes.
+     */
+    public List<SystemTypeCheckbox> systemTypeCheckboxes(Long fiId) {
+        List<SystemType> activeTypes = findActiveSystemTypes();
+        Set<Long> existingTypeIds = new HashSet<>();
+        if (fiId != null) {
+            existingTypeIds = findCredentials(fiId).stream()
+                    .map(c -> c.getSystemType().getId())
+                    .collect(Collectors.toSet());
+        }
+
+        List<SystemTypeCheckbox> checkboxes = new ArrayList<>();
+        for (SystemType type : activeTypes) {
+            SystemTypeCheckbox cb = new SystemTypeCheckbox();
+            cb.setId(type.getId());
+            cb.setCode(type.getCode().name());
+            cb.setDisplayName(type.getDisplayName());
+            cb.setSelected(existingTypeIds.contains(type.getId()));
+            checkboxes.add(cb);
+        }
+        return checkboxes;
+    }
+
+    public static class SystemTypeCheckbox {
+        private Long id;
+        private String code;
+        private String displayName;
+        private boolean selected;
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getCode() { return code; }
+        public void setCode(String code) { this.code = code; }
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+        public boolean isSelected() { return selected; }
+        public void setSelected(boolean selected) { this.selected = selected; }
+    }
+
+    private void applyCredentialLines(FinancialInstitution fi, List<CredentialLine> lines) {
+        for (CredentialLine line : lines) {
+            if (line.getSystemTypeId() == null) {
+                continue;
+            }
+            createOrUpdateCredential(
+                    fi.getId(),
+                    line.getSystemTypeId(),
+                    line.getUserId(),
+                    line.getPassword(),
+                    line.isVpn() ? line.getPreSharedKey() : null,
+                    line.getNotes(),
+                    LocalDate.now());
+        }
+    }
+
+    private CredentialLine toLine(SystemType type, Credential credential) {
+        CredentialLine line = new CredentialLine();
+        line.setSystemTypeId(type.getId());
+        line.setSystemCode(type.getCode().name());
+        line.setDisplayName(type.getDisplayName());
+        line.setVpn(type.getCode() == SystemTypeCode.VPN);
+        if (credential != null) {
+            line.setUserId(credential.getUserId());
+            line.setPassword(credential.getPassword());
+            line.setPreSharedKey(credential.getPreSharedKey());
+            line.setNotes(credential.getNotes());
+        }
+        return line;
+    }
+
+    /**
+     * Rule: every FI always has one credential row per system type
+     * (VPN, PSS2, Inter-Bank, Mobile Wallet, Fraud, MIB).
+     * Empty rows are OK until filled by Edit or Excel import.
+     */
+    @Transactional
+    public int ensureMissingCredentials(Long fiId) {
+        FinancialInstitution fi = idOrThrow(fiId);
+        int added = 0;
+        for (SystemType type : findAllSystemTypes()) {
+            if (credentialRepository.findByFinancialInstitutionAndSystemType(fi, type).isEmpty()) {
+                Credential c = new Credential();
+                c.setFinancialInstitution(fi);
+                c.setSystemType(type);
+                credentialRepository.save(c);
+                added++;
+            }
+        }
+        return added;
     }
 
     private FinancialInstitution idOrThrow(Long id) {

@@ -1,17 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
+<footer th:fragment="footer" class="footer">
+    <p>© 2026 User Registration System</p>
+    <script>
+    (function () {
+      const sidebar = document.getElementById('appSidebar');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      const toggle = document.getElementById('menuToggle');
+      if (!sidebar || !toggle) return;
 
-<footer th:fragment="footer"
-        class="footer">
+      function closeMenu() {
+        sidebar.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-open');
+      }
 
+      function openMenu() {
+        sidebar.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-open');
+      }
 
-    <p>
-        © 2026 User Registration System
-    </p>
+      toggle.addEventListener('click', function () {
+        if (sidebar.classList.contains('is-open')) closeMenu();
+        else openMenu();
+      });
 
-
+      if (backdrop) backdrop.addEventListener('click', closeMenu);
+      sidebar.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', closeMenu);
+      });
+    })();
+    </script>
 </footer>
-
 
 </html>

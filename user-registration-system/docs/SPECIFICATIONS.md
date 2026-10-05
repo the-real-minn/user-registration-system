@@ -13,21 +13,34 @@ Replace the Excel workbook **FIDES ID Management** with a Spring Boot web applic
 | Excel import | Manual copy | `/fides/import` |
 | Result Notice | Result Notice sheet | `/fides/notices/new` |
 | Notice history | Saved notices | `/fides/notices` |
-| Password tools | Random Password / formulas | Generate buttons + notice checkboxes |
+| Password tools | Random Password / PSK | Generate Password / PSK buttons + notice checkboxes |
 
-## Database
+## FI + systems rule (simple)
 
-- `financial_institutions` — FI Code, name, short title, highlight, sort
-- `system_types` — VPN, PSS2, INTER_BANK, MOBILE_WALLET, BANK_FRAUD, MIB
-- `credentials` — user_id, password, psk, update_date per FI+system
-- `result_notices` — printable snapshot of a notice
-- `users` — app login (existing)
+**Every bank always has exactly 6 credential rows** (same as Excel User ID columns):
+
+1. VPN  
+2. CBM-NET related (PSS2)  
+3. Inter-Bank Reporting  
+4. Mobile Wallet  
+5. Bank Account and Fraud Report  
+6. Mobile and Internet Banking  
+
+| Action | What happens |
+|--------|----------------|
+| **Add FI** | Creates bank + all 6 empty rows |
+| **Excel import** | Fills rows that have Excel data; still keeps all 6 rows |
+| **Open FI detail** | Auto-adds any missing system row |
+| **Edit credential** | Fill User ID / Password / PSK for that system |
+| **Result Notice** | VPN always; User Category picks one login system (3–6) |
+
+Empty User ID / Password is OK. Fill only when needed.
 
 ## Password rules
 
 - Length: 8 (default)
 - Charset: `A–Z a–z 0–9` + `!@#$%^&*()-_+[]{}|`
-- User ID rule: `LEFT(fi_code, 4) + system.id_suffix`
+- User ID: set by Excel import or Edit only (no generate button)
 
 ## Result Notice rules
 

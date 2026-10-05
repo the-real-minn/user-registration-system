@@ -13,36 +13,123 @@
     <h2 th:text="${mode == 'create'} ? 'New Financial Institution' : 'Edit Financial Institution'"></h2>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <div class="card shadow p-4" style="max-width:640px;">
-        <form method="post"
-              th:object="${institution}"
-              th:action="${mode == 'create'} ? @{/fides/institutions} : @{/fides/institutions/{id}(id=*{id})}">
-            <div class="mb-3">
-                <label class="form-label">FI Code (BIC)</label>
-                <input class="form-control" th:field="*{fiCode}" required>
+    <form method="post"
+          th:object="${institution}"
+          th:action="${mode == 'create'} ? @{/fides/institutions} : @{/fides/institutions/{id}(id=*{id})}">
+
+        <div class="card shadow p-4 mb-4">
+            <h5 class="mb-3">Bank info</h5>
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">FI Code (BIC)</label>
+                    <input class="form-control" th:field="*{fiCode}" required>
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label">Bank Name</label>
+                    <input class="form-control" th:field="*{bankName}" required>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Short Title</label>
+                    <input class="form-control" th:field="*{shortTitle}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Sort Order</label>
+                    <input class="form-control" type="number" th:field="*{sortOrder}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Row Highlight</label>
+                    <select class="form-select" th:field="*{rowHighlight}">
+                        <option th:each="h : ${highlights}" th:value="${h}" th:text="${h}"></option>
+                    </select>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Bank Name</label>
-                <input class="form-control" th:field="*{bankName}" required>
+        </div>
+
+        <div class="card shadow p-4 mb-4">
+            <h5 class="mb-1">System Selection</h5>
+            <p class="text-muted small mb-3">Select which systems this institution uses. Credential fields will appear below for each selected system.</p>
+
+            <div class="row g-3">
+                <div class="col-12" th:each="cb : ${systemTypeCheckboxes}">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="selectedSystemTypeIds"
+                               th:value="${cb.id}"
+                               th:checked="${cb.selected}"
+                               th:id="'system-' + ${cb.id}">
+                        <label class="form-check-label" th:for="'system-' + ${cb.id}">
+                            <strong th:text="${cb.displayName}"></strong>
+                            <span class="text-muted small ms-2" th:text="'(' + ${cb.code} + ')'"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Short Title</label>
-                <input class="form-control" th:field="*{shortTitle}">
+        </div>
+
+        <div class="card shadow p-4 mb-4" th:if="${credentialLines != null and !credentialLines.isEmpty()}">
+            <h5 class="mb-1">System credentials</h5>
+            <p class="text-muted small mb-3">
+                Fill in credentials for selected systems. Leave blank if not used yet.
+            </p>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 credential-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="min-width:180px;">System</th>
+                        <th>User ID</th>
+                        <th>Password</th>
+                        <th>PSK (VPN only)</th>
+                        <th>Notes / Chat (Optional)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="line, stat : ${credentialLines}">
+                        <td>
+                            <strong th:text="${line.displayName}">System</strong>
+                            <input type="hidden" th:name="'lines[' + ${stat.index} + '].systemTypeId'" th:value="${line.systemTypeId}">
+                            <input type="hidden" th:name="'lines[' + ${stat.index} + '].systemCode'" th:value="${line.systemCode}">
+                            <input type="hidden" th:name="'lines[' + ${stat.index} + '].displayName'" th:value="${line.displayName}">
+                            <input type="hidden" th:name="'lines[' + ${stat.index} + '].vpn'" th:value="${line.vpn}">
+                        </td>
+                        <td>
+                            <input class="form-control form-control-sm"
+                                   th:name="'lines[' + ${stat.index} + '].userId'"
+                                   th:value="${line.userId}"
+                                   placeholder="User ID">
+                        </td>
+                        <td>
+                            <input class="form-control form-control-sm"
+                                   th:name="'lines[' + ${stat.index} + '].password'"
+                                   th:value="${line.password}"
+                                   placeholder="Password">
+                        </td>
+                        <td>
+                            <input class="form-control form-control-sm"
+                                   th:if="${line.vpn}"
+                                   th:name="'lines[' + ${stat.index} + '].preSharedKey'"
+                                   th:value="${line.preSharedKey}"
+                                   placeholder="Pre-Shared Key">
+                            <span class="text-muted small" th:unless="${line.vpn}">—</span>
+                        </td>
+                        <td>
+                            <textarea class="form-control form-control-sm notes-textarea"
+                                      th:name="'lines[' + ${stat.index} + '].notes'"
+                                      th:text="${line.notes}"
+                                      placeholder="Optional notes / chat..."
+                                      rows="2"
+                                      style="resize: vertical; min-height: 60px;"></textarea>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Sort Order</label>
-                <input class="form-control" type="number" th:field="*{sortOrder}">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Row Highlight</label>
-                <select class="form-select" th:field="*{rowHighlight}">
-                    <option th:each="h : ${highlights}" th:value="${h}" th:text="${h}"></option>
-                </select>
-            </div>
-            <button class="btn btn-primary" type="submit">Save</button>
-            <a class="btn btn-link" th:href="@{/fides/institutions}">Cancel</a>
-        </form>
-    </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-link" th:href="@{/fides/institutions}">Cancel</a>
+    </form>
 </div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>

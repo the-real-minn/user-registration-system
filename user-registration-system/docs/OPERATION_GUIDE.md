@@ -122,9 +122,15 @@ Current DB load: **59 institutions**, **268 credentials** from the User ID sheet
 
 ### 2. Manage credentials
 
-1. **Institutions** → open a bank
-2. **Edit** a system row, or click **Password** / **PSK** / **User ID** to generate
-3. Use **Edit FI** to change name/code/highlight
+**Rule:** every FI always has all 6 systems:
+VPN, CBM-NET related, Inter-Bank Reporting, Mobile Wallet, Bank Account and Fraud Report, Mobile and Internet Banking.
+
+1. **Institutions → Add FI** — fill bank info + optional User ID/Password for each system → Save  
+2. **Edit FI** — same form: change bank info and all system credentials together  
+3. Or open the bank → **Edit** one system row / **Password** / **PSK**  
+4. User ID is Edit only (no generate button)
+
+Opening a bank (or Excel import) also adds any missing system rows.
 
 ## Result Notice (batch report + ZIP)
 

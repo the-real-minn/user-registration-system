@@ -1,6 +1,7 @@
 package com.minnminn.user_registration_system.controller;
 
 import com.minnminn.user_registration_system.dto.BatchNoticeRequest;
+import com.minnminn.user_registration_system.dto.CredentialLineListForm;
 import com.minnminn.user_registration_system.dto.ResultNoticeForm;
 import com.minnminn.user_registration_system.entity.*;
 import com.minnminn.user_registration_system.service.ExcelImportService;
@@ -62,6 +63,8 @@ public class FidesController {
         }
         model.addAttribute("institution", new FinancialInstitution());
         model.addAttribute("highlights", RowHighlight.values());
+        model.addAttribute("credentialLines", fiService.blankCredentialLines());
+        model.addAttribute("systemTypeCheckboxes", fiService.systemTypeCheckboxes(null));
         model.addAttribute("mode", "create");
         return "fides/institution-form";
     }
@@ -69,14 +72,18 @@ public class FidesController {
     @PostMapping("/institutions")
     public String createInstitution(
             @ModelAttribute FinancialInstitution institution,
+            @RequestParam(value = "selectedSystemTypeIds", required = false) List<Long> selectedSystemTypeIds,
+            @ModelAttribute CredentialLineListForm linesForm,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
         }
         try {
-            FinancialInstitution saved = fiService.createWithEmptyCredentials(institution);
-            redirectAttributes.addFlashAttribute("success", "Institution created.");
+            FinancialInstitution saved = fiService.createWithCredentials(
+                    institution, selectedSystemTypeIds, linesForm != null ? linesForm.getLines() : null);
+            redirectAttributes.addFlashAttribute("success",
+                    "Institution created with selected systems.");
             return "redirect:/fides/institutions/" + saved.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -91,6 +98,7 @@ public class FidesController {
         }
         FinancialInstitution fi = fiService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Institution not found"));
+        fiService.ensureMissingCredentials(id);
         model.addAttribute("institution", fi);
         model.addAttribute("credentials", fiService.findCredentials(id));
         model.addAttribute("notices", noticeService.findByInstitution(id));
@@ -106,6 +114,8 @@ public class FidesController {
                 .orElseThrow(() -> new IllegalArgumentException("Institution not found"));
         model.addAttribute("institution", fi);
         model.addAttribute("highlights", RowHighlight.values());
+        model.addAttribute("credentialLines", fiService.credentialLinesForInstitution(id));
+        model.addAttribute("systemTypeCheckboxes", fiService.systemTypeCheckboxes(id));
         model.addAttribute("mode", "edit");
         return "fides/institution-form";
     }
@@ -114,21 +124,21 @@ public class FidesController {
     public String updateInstitution(
             @PathVariable Long id,
             @ModelAttribute FinancialInstitution form,
+            @RequestParam(value = "selectedSystemTypeIds", required = false) List<Long> selectedSystemTypeIds,
+            @ModelAttribute CredentialLineListForm linesForm,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
         }
-        FinancialInstitution fi = fiService.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Institution not found"));
-        fi.setFiCode(form.getFiCode());
-        fi.setBankName(form.getBankName());
-        fi.setShortTitle(form.getShortTitle());
-        fi.setSortOrder(form.getSortOrder());
-        fi.setRowHighlight(form.getRowHighlight());
-        fiService.save(fi);
-        redirectAttributes.addFlashAttribute("success", "Institution updated.");
-        return "redirect:/fides/institutions/" + id;
+        try {
+            fiService.updateWithCredentials(id, form, selectedSystemTypeIds, linesForm != null ? linesForm.getLines() : null);
+            redirectAttributes.addFlashAttribute("success", "Institution and system credentials updated.");
+            return "redirect:/fides/institutions/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/fides/institutions/" + id + "/edit";
+        }
     }
 
     @PostMapping("/institutions/{id}/delete")
@@ -187,13 +197,14 @@ public class FidesController {
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) String password,
             @RequestParam(required = false) String preSharedKey,
+            @RequestParam(required = false) String notes,
             @RequestParam(required = false) LocalDate updateDate,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         if (!isLoggedIn(session)) {
             return "redirect:/login";
         }
-        fiService.createOrUpdateCredential(fiId, systemTypeId, userId, password, preSharedKey, updateDate);
+        fiService.createOrUpdateCredential(fiId, systemTypeId, userId, password, preSharedKey, notes, updateDate);
         redirectAttributes.addFlashAttribute("success", "Credential saved.");
         return "redirect:/fides/institutions/" + fiId;
     }

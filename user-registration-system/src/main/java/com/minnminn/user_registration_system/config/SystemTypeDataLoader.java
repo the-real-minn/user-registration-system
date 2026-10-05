@@ -24,7 +24,7 @@ public class SystemTypeDataLoader implements CommandLineRunner {
                 type.setCode(code);
                 type.setDisplayName(code.getDisplayName());
                 type.setSortOrder(order);
-                // Default suffixes — adjust after reviewing Master sheet
+                type.setActive(true);
                 type.setIdSuffix(defaultSuffix(code));
                 systemTypeRepository.save(type);
             }

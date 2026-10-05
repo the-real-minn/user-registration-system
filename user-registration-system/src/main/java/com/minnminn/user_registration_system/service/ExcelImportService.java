@@ -38,16 +38,19 @@ public class ExcelImportService {
     private final CredentialRepository credentialRepository;
     private final SystemTypeRepository systemTypeRepository;
     private final ResultNoticeRepository noticeRepository;
+    private final FinancialInstitutionService fiService;
 
     public ExcelImportService(
             FinancialInstitutionRepository fiRepository,
             CredentialRepository credentialRepository,
             SystemTypeRepository systemTypeRepository,
-            ResultNoticeRepository noticeRepository) {
+            ResultNoticeRepository noticeRepository,
+            FinancialInstitutionService fiService) {
         this.fiRepository = fiRepository;
         this.credentialRepository = credentialRepository;
         this.systemTypeRepository = systemTypeRepository;
         this.noticeRepository = noticeRepository;
+        this.fiService = fiService;
     }
 
     public record ImportResult(int institutions, int credentials, String message) {}
@@ -132,6 +135,15 @@ public class ExcelImportService {
                 if (isNew) {
                     fiCount++;
                 }
+
+                // Get active system types for this import
+                List<Long> activeSystemTypeIds = types.values().stream()
+                        .filter(SystemType::isActive)
+                        .map(SystemType::getId)
+                        .toList();
+
+                // Create credential rows for active system types
+                fiService.createWithCredentials(fi, activeSystemTypeIds, null);
 
                 credCount += upsertGroup(fi, types.get(SystemTypeCode.VPN),
                         row, 4, 5, 6, 7, true, formatter, evaluator);

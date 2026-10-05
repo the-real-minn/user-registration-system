@@ -22,12 +22,12 @@
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <form method="post" th:action="@{/fides/notices/batch}" th:object="${request}" id="noticeForm" class="row g-4">
+    <form method="post" th:action="@{/fides/notices/batch}" th:object="${request}" id="noticeForm" class="row g-3 g-xl-4 notice-form">
 
-        <div class="col-lg-5">
-            <div class="card shadow p-4 notice-card">
+        <div class="col-12 col-xl-5">
+            <div class="card shadow p-3 p-md-4 notice-card h-100">
                 <div class="notice-title-bar text-center mb-3">
-                    CBM-FIDE VPN ID &amp; Login User ID Notice
+                    CBM-FIDE VPN ID & Login User ID Notice
                 </div>
 
                 <div class="mb-3">
@@ -37,21 +37,21 @@
 
                 <div class="mb-3">
                     <label class="form-label">VPN status</label>
-                    <select class="form-select field-highlight" th:field="*{vpnStatus}">
+                    <select class="form-select field-highlight" th:field="*{vpnStatus}" style="width: 100%;">
                         <option th:each="s : ${vpnStatuses}" th:value="${s}" th:text="${s}"></option>
                     </select>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">FIDES Login status</label>
-                    <select class="form-select field-highlight" th:field="*{fidesLoginStatus}">
+                    <select class="form-select field-highlight" th:field="*{fidesLoginStatus}" style="width: 100%;">
                         <option th:each="s : ${fidesStatuses}" th:value="${s}" th:text="${s}"></option>
                     </select>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">User Category</label>
-                    <select class="form-select field-highlight" th:field="*{userCategory}">
+                    <select class="form-select field-highlight" th:field="*{userCategory}" style="width: 100%;">
                         <option th:each="c : ${categories}" th:value="${c}" th:text="${c}"></option>
                     </select>
                 </div>
@@ -74,16 +74,16 @@
 
                 <div class="password-ref small text-muted">
                     <strong>Password Reference:</strong>
-                    <div>ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz123456789!@#$%^&amp;*()-+[]_</div>
+                    <div class="d-flex flex-wrap gap-1">ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz123456789!@#$%^&*()-+[]_</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-7">
-            <div class="card shadow p-4">
+        <div class="col-12 col-xl-7">
+            <div class="card shadow p-3 p-md-4">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <h5 class="mb-0">Select banks (BIC)</h5>
-                    <div class="btn-group btn-group-sm">
+                    <div class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn btn-outline-primary" id="btnAll">Select all</button>
                         <button type="button" class="btn btn-outline-secondary" id="btnNone">Clear</button>
                     </div>
@@ -103,7 +103,7 @@
                     </label>
                 </div>
 
-                <div class="bank-select-box border rounded p-2" id="bankList">
+                <div class="bank-select-box border rounded p-3" id="bankList">
                     <div class="form-check bank-item" th:each="fi : ${institutions}"
                          th:attr="data-text=${fi.fiCode + ' ' + fi.bankName}">
                         <input class="form-check-input bank-cb" type="checkbox"
